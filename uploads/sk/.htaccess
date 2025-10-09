@@ -1,0 +1,17 @@
+# Izinkan hanya file PDF yang bisa diakses
+<FilesMatch "\.(pdf)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Blokir akses ke file lain
+<FilesMatch "\.(?!pdf$)[^.]+$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Disable script execution
+php_flag engine off
