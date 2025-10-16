@@ -62,10 +62,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($error)) {
+        // Calculate expired date based on SK status
+        $existing_expired = $sk_data['tanggal_expired'];
+        $new_expired_date = null;
+        
+        // If SK is not approved or tanggal SK changed, recalculate expired
+        if ($sk_data['status'] !== 'Disetujui' || $tgl !== $sk_data['tgl']) {
+            $new_expired_date = date('Y-m-d', strtotime($tgl . ' + ' . MASA_BERLAKU_SK . ' months'));
+        } else {
+            // Keep existing expired date if SK is approved
+            $new_expired_date = $existing_expired;
+        }
+
         // Update database
         $query = "UPDATE surat_keputusan 
-                  SET no_sk='$no_sk', hal='$hal', tgl='$tgl', file='$filename', 
-                      status='Draft', updated_at=NOW() 
+                  SET no_sk='$no_sk', 
+                      hal='$hal', 
+                      tgl='$tgl', 
+                      file='$filename',
+                      tanggal_expired='$new_expired_date',
+                      status='Draft', 
+                      updated_at=NOW() 
                   WHERE no_reg='$no_reg'";
         
         if (mysqli_query($conn, $query)) {

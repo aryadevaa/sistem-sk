@@ -26,6 +26,18 @@ function requireAdmin() {
     }
 }
 
+// Hitung tanggal expired berdasarkan status SK
+function calculateExpiredDate($tanggal_sk, $status = 'Draft', $existing_expired = null) {
+    // Jika SK sudah disetujui dan memiliki tanggal expired, pertahankan
+    if ($status === 'Disetujui' && $existing_expired !== null) {
+        return $existing_expired;
+    }
+    
+    // Untuk Draft/Revisi, hitung tanggal expired baru
+    $masa_berlaku = MASA_BERLAKU_SK; // Defined in config.php
+    return date('Y-m-d', strtotime($tanggal_sk . " + {$masa_berlaku} months"));
+}
+
 // Format tanggal Indonesia
 function formatTanggal($date, $format = 'd F Y') {
     $bulan = array(
@@ -165,9 +177,9 @@ function addSignatureToPDF($sourcePDF, $signaturePath, $outputPDF) {
                 
                 // Position signature at bottom right
                 $signatureWidth = 50; // Adjust as needed
-                $signatureX = $pageWidth - $signatureWidth - 20; // 20mm from right
-                $signatureY = $pageHeight - 40; // 40mm from bottom
-                
+                $signatureX = $pageWidth - $signatureWidth - 34; // 34mm from right
+                $signatureY = $pageHeight - 110; // 110mm from bottom
+
                 // Add the signature image
                 $pdf->Image($signaturePath, $signatureX, $signatureY, $signatureWidth);
             }
@@ -274,13 +286,7 @@ function getExpiredStatus($tanggal_expired) {
     return ['status' => 'active', 'label' => 'Berlaku', 'class' => 'success'];
 }
 
-// Hitung tanggal expired dari tanggal SK
-function calculateExpiredDate($tanggal_sk, $bulan = null) {
-    if ($bulan === null) {
-        $bulan = MASA_BERLAKU_SK;
-    }
-    return date('Y-m-d', strtotime("+{$bulan} months", strtotime($tanggal_sk)));
-}
+// Function telah dipindahkan ke atas
 
 // Upload foto profil
 function uploadProfilePhoto($file, $user_id) {
