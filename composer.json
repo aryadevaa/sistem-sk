@@ -1,0 +1,19 @@
+{
+    "name": "asus/sistem-sk",
+    "autoload": {
+        "psr-4": {
+            "Asus\\SistemSk\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "aryadevaa",
+            "email": "150322748+aryadevaa@users.noreply.github.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.6"
+    }
+}

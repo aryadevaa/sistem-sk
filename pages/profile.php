@@ -15,96 +15,47 @@ $user_data = getUserData($user_id, $conn);
 $error = '';
 $success = '';
 
-// Proses update foto profil
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_photo'])) {
-    if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png'];
-        $max_size = 2 * 1024 * 1024; // 2MB
-        
-        $file_type = $_FILES['profile_photo']['type'];
-        $file_size = $_FILES['profile_photo']['size'];
-        
-        if (!in_array($file_type, $allowed_types)) {
+// Get error/success messages from query parameters
+if (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'username':
+            $error = 'Username tidak boleh kosong!';
+            break;
+        case 'username_exists':
+            $error = 'Username sudah digunakan!';
+            break;
+        case 'password_mismatch':
+            $error = 'Password baru dan konfirmasi password tidak cocok!';
+            break;
+        case 'password_length':
+            $error = 'Password minimal 6 karakter!';
+            break;
+        case 'photo_type':
             $error = 'Hanya file JPG, JPEG, dan PNG yang diizinkan!';
-        } else if ($file_size > $max_size) {
+            break;
+        case 'photo_size':
             $error = 'Ukuran file maksimal 2MB!';
-        } else {
-            // Generate filename unik
-            $extension = pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION);
-            $filename = 'profile_' . $user_id . '_' . time() . '.' . $extension;
-            $upload_path = dirname(__DIR__) . '/uploads/profiles/';
-            
-            // Buat folder jika belum ada
-            if (!file_exists($upload_path)) {
-                mkdir($upload_path, 0777, true);
-            }
-            
-            if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $upload_path . $filename)) {
-                // Hapus foto lama jika ada
-                if (!empty($user_data['profile_photo']) && file_exists($upload_path . $user_data['profile_photo'])) {
-                    unlink($upload_path . $user_data['profile_photo']);
-                }
-                
-                // Update database
-                $filename_escaped = mysqli_real_escape_string($conn, $filename);
-                $query = "UPDATE users SET profile_photo='$filename_escaped' WHERE id='$user_id'";
-                if (mysqli_query($conn, $query)) {
-                    $success = 'Foto profil berhasil diupdate!';
-                    $user_data = getUserData($user_id, $conn);
-                } else {
-                    $error = 'Gagal menyimpan ke database!';
-                }
-            } else {
-                $error = 'Gagal mengupload file!';
-            }
-        }
-    } else {
-        $error = 'Silakan pilih foto terlebih dahulu!';
+            break;
+        case 'upload_failed':
+            $error = 'Gagal mengupload file!';
+            break;
+        case 'update_failed':
+            $error = 'Gagal mengupdate profil!';
+            break;
+        case 'signature':
+            $error = isset($_GET['message']) ? $_GET['message'] : 'Gagal mengupload tanda tangan!';
+            break;
     }
 }
 
-// Proses update profil
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
-    $new_username = clean($_POST['username']);
-    $new_password = $_POST['new_password'];
-    $confirm_password = $_POST['confirm_password'];
-    
-    // Validasi
-    if (strlen($new_username) < 4) {
-        $error = 'Username minimal 4 karakter!';
-    } else {
-        // Cek apakah username sudah digunakan oleh user lain
-        $check_query = "SELECT id FROM users WHERE username = '$new_username' AND id != '$user_id'";
-        $check_result = mysqli_query($conn, $check_query);
-        
-        if (mysqli_num_rows($check_result) > 0) {
-            $error = 'Username sudah digunakan oleh user lain!';
-        } else {
-            if (!empty($new_password)) {
-                if ($new_password !== $confirm_password) {
-                    $error = 'Password baru dan konfirmasi password tidak cocok!';
-                } else if (strlen($new_password) < 6) {
-                    $error = 'Password minimal 6 karakter!';
-                } else {
-                    // Update dengan password baru
-                    $password_hash = md5($new_password);
-                    $query = "UPDATE users SET username='$new_username', password='$password_hash' WHERE id='$user_id'";
-                }
-            } else {
-                // Update tanpa password
-                $query = "UPDATE users SET username='$new_username' WHERE id='$user_id'";
-            }
-            
-            if (empty($error)) {
-                if (mysqli_query($conn, $query)) {
-                    $_SESSION['username'] = $new_username;
-                    $success = 'Profil berhasil diupdate!';
-                    $user_data = getUserData($user_id, $conn); // Refresh data
-                } else {
-                    $error = 'Gagal mengupdate profil: ' . mysqli_error($conn);
-                }
-            }
-        }
+if (isset($_GET['success'])) {
+    switch ($_GET['success']) {
+        case 'photo':
+            $success = 'Foto profil berhasil diupdate!';
+            break;
+        case 'profile':
+            $success = 'Profil berhasil diupdate!';
+            break;
     }
 }
 
@@ -351,7 +302,7 @@ $stats = mysqli_fetch_assoc($stats_result);
         </div>
 
         <!-- Form Upload Photo (Hidden) -->
-        <form method="POST" enctype="multipart/form-data" id="photoForm" style="display: none;">
+        <form method="POST" action="../process/update_profile.php" enctype="multipart/form-data" id="photoForm" style="display: none;">
             <input type="file" id="photoInput" name="profile_photo" accept="image/jpeg,image/jpg,image/png" onchange="previewAndUpload(this)">
             <input type="hidden" name="update_photo" value="1">
         </form>
@@ -384,7 +335,7 @@ $stats = mysqli_fetch_assoc($stats_result);
                 <div class="card-title">✏️ Edit Profil</div>
             </div>
 
-            <form method="POST" action="">
+            <form method="POST" action="../process/update_profile.php" enctype="multipart/form-data">
                 <div class="form-section">
                     <div class="form-group">
                         <label class="form-label">Username <span style="color: #e53e3e;">*</span></label>
@@ -422,6 +373,34 @@ $stats = mysqli_fetch_assoc($stats_result);
                     </div>
                 </div>
 
+                <?php if ($role === 'admin'): ?>
+                <div class="form-section-full" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                    <h3 style="color: #2d3748; font-size: 18px; margin-bottom: 15px;">✒️ Tanda Tangan Digital</h3>
+                    <p style="color: #718096; font-size: 14px; margin-bottom: 20px;">Upload tanda tangan untuk approval SK</p>
+
+                    <div class="form-group">
+                        <?php if (!empty($user_data['signature_path'])): ?>
+                            <div class="current-signature" style="margin-bottom: 15px;">
+                                <label class="form-label">Tanda Tangan Saat Ini:</label>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; display: inline-block;">
+                                    <img src="<?php echo SIGNATURE_URL . htmlspecialchars($user_data['signature_path']); ?>?v=<?php echo time(); ?>" 
+                                         alt="Tanda Tangan" style="max-width: 200px; max-height: 100px;">
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <label class="form-label">Upload Tanda Tangan Baru</label>
+                        <input type="file" name="signature" accept="image/png" class="form-input" 
+                               onchange="validateSignature(this)">
+                        <small style="color: #718096; font-size: 13px; display: block; margin-top: 5px;">
+                            Format: PNG dengan background transparan<br>
+                            Ukuran maksimal: 500KB<br>
+                            Digunakan untuk approval SK
+                        </small>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <div style="display: flex; gap: 10px; margin-top: 30px;">
                     <button type="submit" name="update_profile" class="btn-add" style="flex: 1;">
                         💾 Simpan Perubahan
@@ -452,6 +431,27 @@ $stats = mysqli_fetch_assoc($stats_result);
         function logout() {
             if (confirm('Apakah Anda yakin ingin logout?')) {
                 window.location.href = '../auth/logout.php';
+            }
+        }
+
+        // Validasi file tanda tangan
+        function validateSignature(input) {
+            const file = input.files[0];
+            
+            if (file) {
+                // Validasi tipe file
+                if (file.type !== 'image/png') {
+                    alert('File harus dalam format PNG!');
+                    input.value = '';
+                    return;
+                }
+                
+                // Validasi ukuran
+                if (file.size > 500 * 1024) { // 500KB
+                    alert('Ukuran file maksimal 500KB!');
+                    input.value = '';
+                    return;
+                }
             }
         }
 

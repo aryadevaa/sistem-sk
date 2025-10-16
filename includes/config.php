@@ -23,6 +23,10 @@ define('BASE_URL', 'http://localhost/sistem-sk/');
 define('UPLOAD_PATH', __DIR__ . '/../uploads/sk/');
 define('UPLOAD_URL', BASE_URL . 'uploads/sk/');
 
+// Path Upload Signatures
+define('SIGNATURE_PATH', __DIR__ . '/../uploads/signatures/');
+define('SIGNATURE_URL', BASE_URL . 'uploads/signatures/');
+
 // Session Configuration
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

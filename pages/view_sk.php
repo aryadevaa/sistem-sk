@@ -278,7 +278,9 @@ $role = $_SESSION['role'];
                     <div class="card-title">📄 Preview Dokumen</div>
                 </div>
                 <div class="pdf-container">
-                    <?php if (!empty($sk_data['file'])): ?>
+                    <?php if (!empty($sk_data['signed_file']) && $sk_data['status'] === 'Disetujui'): ?>
+                        <iframe src="<?php echo UPLOAD_URL . $sk_data['signed_file']; ?>"></iframe>
+                    <?php elseif (!empty($sk_data['file'])): ?>
                         <iframe src="<?php echo UPLOAD_URL . $sk_data['file']; ?>"></iframe>
                     <?php else: ?>
                         <div class="pdf-placeholder">
@@ -394,7 +396,7 @@ $role = $_SESSION['role'];
     <script src="../assets/js/main.js"></script>
     <script>
         function downloadPDF() {
-            window.open('<?php echo UPLOAD_URL . $sk_data['file']; ?>', '_blank');
+            window.open('<?php echo UPLOAD_URL . ($sk_data['status'] === 'Disetujui' && !empty($sk_data['signed_file']) ? $sk_data['signed_file'] : $sk_data['file']); ?>', '_blank');
         }
 
         function logout() {

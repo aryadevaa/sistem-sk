@@ -141,6 +141,47 @@ function getComments($skId, $conn) {
     return $comments;
 }
 
+// Add digital signature to PDF
+function addSignatureToPDF($sourcePDF, $signaturePath, $outputPDF) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+    
+    try {
+        $pdf = new \setasign\Fpdi\Fpdi();
+        
+        // Get the number of pages in source PDF
+        $pageCount = $pdf->setSourceFile($sourcePDF);
+        
+        // Import all pages from source
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $tplIdx = $pdf->importPage($i);
+            $pdf->AddPage();
+            $pdf->useTemplate($tplIdx);
+            
+            // Add signature only to the last page
+            if ($i === $pageCount && file_exists($signaturePath)) {
+                // Get page dimensions
+                $pageWidth = $pdf->GetPageWidth();
+                $pageHeight = $pdf->GetPageHeight();
+                
+                // Position signature at bottom right
+                $signatureWidth = 50; // Adjust as needed
+                $signatureX = $pageWidth - $signatureWidth - 20; // 20mm from right
+                $signatureY = $pageHeight - 40; // 40mm from bottom
+                
+                // Add the signature image
+                $pdf->Image($signaturePath, $signatureX, $signatureY, $signatureWidth);
+            }
+        }
+        
+        // Save the signed PDF
+        $pdf->Output('F', $outputPDF);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error adding signature: " . $e->getMessage());
+        return false;
+    }
+}
+
 // Count statistics
 function getStatistics($conn, $userId = null) {
     $stats = array();
@@ -239,5 +280,30 @@ function calculateExpiredDate($tanggal_sk, $bulan = null) {
         $bulan = MASA_BERLAKU_SK;
     }
     return date('Y-m-d', strtotime("+{$bulan} months", strtotime($tanggal_sk)));
+}
+
+// Upload foto profil
+function uploadProfilePhoto($file, $user_id) {
+    $targetDir = UPLOAD_PATH . 'profiles/';
+    $fileName = 'profile_' . $user_id . '_' . time() . '.jpg';
+    $targetFile = $targetDir . $fileName;
+    
+    // Cek apakah file adalah gambar
+    $imageFileType = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
+    if (!in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
+        return ['success' => false, 'message' => 'Hanya file gambar yang diizinkan (JPG, JPEG, PNG, GIF)'];
+    }
+    
+    // Cek ukuran file (max 2MB)
+    if ($file["size"] > 2000000) {
+        return ['success' => false, 'message' => 'Ukuran file terlalu besar (max 2MB)'];
+    }
+    
+    // Upload file
+    if (move_uploaded_file($file["tmp_name"], $targetFile)) {
+        return ['success' => true, 'filename' => $fileName];
+    } else {
+        return ['success' => false, 'message' => 'Terjadi kesalahan saat upload file'];
+    }
 }
 ?>
