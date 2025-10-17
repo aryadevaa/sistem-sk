@@ -176,9 +176,9 @@ function addSignatureToPDF($sourcePDF, $signaturePath, $outputPDF) {
                 $pageHeight = $pdf->GetPageHeight();
                 
                 // Position signature at bottom right
-                $signatureWidth = 50; // Adjust as needed
-                $signatureX = $pageWidth - $signatureWidth - 34; // 34mm from right
-                $signatureY = $pageHeight - 110; // 110mm from bottom
+                $signatureWidth = 35; // Adjust as needed
+                $signatureX = $pageWidth - $signatureWidth - 38; // 34mm from right
+                $signatureY = $pageHeight - 120; // 110mm from bottom
 
                 // Add the signature image
                 $pdf->Image($signaturePath, $signatureX, $signatureY, $signatureWidth);
