@@ -77,7 +77,6 @@ while ($row = mysqli_fetch_assoc($result)) {
             <?php 
             if ($_GET['error'] === 'notfound') echo '⚠️ Data tidak ditemukan!';
             if ($_GET['error'] === 'forbidden') echo '⚠️ Anda tidak memiliki akses!';
-            if ($_GET['error'] === 'not_expired') echo '⚠️ SK belum expired atau belum disetujui!';
             if ($_GET['error'] === 'already_requested') echo '⚠️ Perpanjangan sudah pernah diajukan!';
             if ($_GET['error'] === 'perpanjangan_gagal') echo '⚠️ Gagal mengajukan perpanjangan!';
             ?>
@@ -102,7 +101,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                             <th>Nomor SK</th>
                             <th>Perihal</th>
                             <th>Tanggal SK</th>
-                            <th>Expired</th>
                             <th>Status</th>
                             <th>Updated At</th>
                             <th>Aksi</th>
@@ -121,23 +119,15 @@ while ($row = mysqli_fetch_assoc($result)) {
                             <td><?php echo htmlspecialchars($sk['hal']); ?></td>
                             <td><?php echo formatTanggal($sk['tgl'], 'd/m/Y'); ?></td>
                             <td>
-                                <?php 
-                                // Tampilkan sisa hari hingga expired. Jika tidak ada tanggal atau sudah expired, tampilkan '-'
-                                $sisa = sisaHariBerlaku($sk['tanggal_expired']);
-                                echo ($sisa > 0) ? $sisa . ' hari' : ((isExpired($sk['tanggal_expired'])) ? 'Expired' : '-');
-                                ?>
-                            </td>
-                            <td>
                                 <span class="status-badge status-<?php echo strtolower($sk['status']); ?>">
                                     <?php echo $sk['status']; ?>
                                 </span>
-                                <?php if (isExpired($sk['tanggal_expired']) && $sk['status'] === 'Disetujui'): ?>
-                                <br><span class="status-badge status-expired" style="margin-top: 5px;">
-                                    ⚠️ Expired
-                                </span>
-                                <?php elseif (willExpireSoon($sk['tanggal_expired']) && $sk['status'] === 'Disetujui'): ?>
-                                <br><span class="status-badge status-warning" style="margin-top: 5px;">
-                                    ⏰ <?php echo sisaHariBerlaku($sk['tanggal_expired']); ?> hari lagi
+                                <?php 
+                                $new_status = getNewStatus($sk['created_at']);
+                                if ($new_status): 
+                                ?>
+                                <br><span class="status-badge status-new" style="margin-top: 5px;">
+                                    🆕 <?php echo $new_status['label']; ?>
                                 </span>
                                 <?php endif; ?>
                             </td>
@@ -150,18 +140,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     </button>
                                     <?php endif; ?>
                                     
-                                    <?php 
-                                    // Button Perpanjangan untuk SK yang expired
-                                    if (isExpired($sk['tanggal_expired']) && $sk['status'] === 'Disetujui' && $sk['perpanjangan_status'] === 'tidak'):
-                                    ?>
-                                    <button class="btn-action btn-extend" onclick="ajukanPerpanjangan('<?php echo $sk['no_reg']; ?>')">
-                                        🔄 Perpanjang
-                                    </button>
-                                    <?php elseif ($sk['perpanjangan_status'] === 'diminta'): ?>
-                                    <span class="status-badge" style="background: #fbbf24; color: #78350f; font-size: 11px;">
-                                        ⏳ Menunggu Approval
-                                    </span>
-                                    <?php endif; ?>
                                     
                                     <button class="btn-action btn-view" onclick="viewSK('<?php echo $sk['no_reg']; ?>')">
                                         View

@@ -21,8 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Generate no_reg otomatis
     $no_reg = generateNoRegister($conn);
     
-    // Hitung tanggal expired otomatis (5 bulan dari tanggal SK)
-    $tanggal_expired = calculateExpiredDate($tgl);
     
     // Upload file PDF
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
@@ -32,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $filename = $upload_result['filename'];
             
             // Insert ke database
-            $query = "INSERT INTO surat_keputusan (no_reg, no_sk, hal, tgl, tanggal_expired, file, status, created_by, created_at, updated_at) 
-                      VALUES ('$no_reg', '$no_sk', '$hal', '$tgl', '$tanggal_expired', '$filename', 'Draft', '$user_id', NOW(), NOW())";
+            $query = "INSERT INTO surat_keputusan (no_reg, no_sk, hal, tgl, file, status, created_by, created_at, updated_at) 
+                      VALUES ('$no_reg', '$no_sk', '$hal', '$tgl', '$filename', 'Draft', '$user_id', NOW(), NOW())";
             
             if (mysqli_query($conn, $query)) {
                 header("Location: data_sk.php?success=created");

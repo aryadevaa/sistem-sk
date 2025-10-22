@@ -26,17 +26,6 @@ function requireAdmin() {
     }
 }
 
-// Hitung tanggal expired berdasarkan status SK
-function calculateExpiredDate($tanggal_sk, $status = 'Draft', $existing_expired = null) {
-    // Jika SK sudah disetujui dan memiliki tanggal expired, pertahankan
-    if ($status === 'Disetujui' && $existing_expired !== null) {
-        return $existing_expired;
-    }
-    
-    // Untuk Draft/Revisi, hitung tanggal expired baru
-    $masa_berlaku = MASA_BERLAKU_SK; // Defined in config.php
-    return date('Y-m-d', strtotime($tanggal_sk . " + {$masa_berlaku} months"));
-}
 
 // Format tanggal Indonesia
 function formatTanggal($date, $format = 'd F Y') {
@@ -245,45 +234,24 @@ function getStatistics($conn, $userId = null) {
     return $stats;
 }
 
-// Check apakah SK sudah expired
-function isExpired($tanggal_expired) {
-    if (empty($tanggal_expired)) return false;
-    return strtotime($tanggal_expired) < strtotime(date('Y-m-d'));
+// Check apakah SK masih baru (dalam 7 hari)
+function isNewSK($created_at) {
+    if (empty($created_at)) return false;
+    
+    $created_time = strtotime($created_at);
+    $current_time = time();
+    $days_diff = ($current_time - $created_time) / (60 * 60 * 24);
+    
+    return $days_diff <= 7;
 }
 
-// Check apakah SK akan expired dalam X hari
-function willExpireSoon($tanggal_expired, $days = 30) {
-    if (empty($tanggal_expired)) return false;
-    $diff = (strtotime($tanggal_expired) - strtotime(date('Y-m-d'))) / (60 * 60 * 24);
-    return $diff > 0 && $diff <= $days;
-}
-
-// Hitung sisa hari berlaku (kembalikan integer jumlah hari tersisa)
-function sisaHariBerlaku($tanggal_expired) {
-    if (empty($tanggal_expired)) return 0;
-    $now = strtotime(date('Y-m-d'));
-    $exp = strtotime($tanggal_expired);
-    if ($exp <= $now) return 0;
-    $diff = ($exp - $now) / (60 * 60 * 24);
-    return (int) floor($diff);
-}
-
-// Get status expired label
-function getExpiredStatus($tanggal_expired) {
-    if (empty($tanggal_expired)) {
-        return ['status' => 'unknown', 'label' => 'Tidak Diketahui', 'class' => 'secondary'];
+// Get status baru label
+function getNewStatus($created_at) {
+    if (isNewSK($created_at)) {
+        return ['status' => 'new', 'label' => 'Baru', 'class' => 'success'];
     }
     
-    if (isExpired($tanggal_expired)) {
-        return ['status' => 'expired', 'label' => 'Kadaluarsa', 'class' => 'danger'];
-    }
-    
-    if (willExpireSoon($tanggal_expired, 30)) {
-        $days = floor((strtotime($tanggal_expired) - strtotime(date('Y-m-d'))) / (60 * 60 * 24));
-        return ['status' => 'warning', 'label' => "Expired {$days} hari lagi", 'class' => 'warning'];
-    }
-    
-    return ['status' => 'active', 'label' => 'Berlaku', 'class' => 'success'];
+    return null;
 }
 
 // Function telah dipindahkan ke atas

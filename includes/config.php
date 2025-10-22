@@ -32,6 +32,4 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Masa Berlaku SK (dalam bulan) - EDIT DI SINI
-define('MASA_BERLAKU_SK', 1); // Default 5 bulan
 ?>

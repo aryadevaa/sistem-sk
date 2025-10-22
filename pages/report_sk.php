@@ -283,7 +283,7 @@ if ($is_searched && !empty($tanggal_awal) && !empty($tanggal_akhir)) {
                                 <th>Nomor Surat Keputusan</th>
                                 <th>Perihal</th>
                                 <th>Tanggal SK</th>
-                                <th>Expired</th>
+                                <th>Status</th>
                                 <th class="no-print">View</th>
                             </tr>
                         </thead>
@@ -299,10 +299,17 @@ if ($is_searched && !empty($tanggal_awal) && !empty($tanggal_akhir)) {
                                 <td><?php echo htmlspecialchars($sk['hal']); ?></td>
                                 <td><?php echo formatTanggal($sk['tgl'], 'd-m-Y'); ?></td>
                                 <td>
+                                    <span class="status-badge status-<?php echo strtolower($sk['status']); ?>">
+                                        <?php echo $sk['status']; ?>
+                                    </span>
                                     <?php 
-                                    $sisa = sisaHariBerlaku($sk['tanggal_expired']);
-                                    echo ($sisa > 0) ? $sisa . ' hari' : ((isExpired($sk['tanggal_expired'])) ? 'Expired' : '-');
+                                    $new_status = getNewStatus($sk['created_at']);
+                                    if ($new_status): 
                                     ?>
+                                    <br><span class="status-badge status-new" style="margin-top: 5px;">
+                                        🆕 <?php echo $new_status['label']; ?>
+                                    </span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="no-print">
                                     <button class="btn-view-pdf" onclick="viewSK('<?php echo $sk['no_reg']; ?>')">
